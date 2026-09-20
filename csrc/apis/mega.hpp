@@ -203,7 +203,7 @@ static void fp8_fp4_mega_moe(
     const auto [x, x_sf, topk_idx, topk_weights, l1_acts, l1_acts_sf, l2_acts, l2_acts_sf] = slice(sym_buffer);
 
     // Dispatch into different architectures
-    if (arch_major == 10) {
+    if ((arch_major == 10 or arch_major == 11)) {
         sm100_fp8_fp4_mega_moe(y,
                                l1_acts, l1_acts_sf,
                                l2_acts, l2_acts_sf,

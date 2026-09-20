@@ -94,7 +94,7 @@ static void smxx_fp8_mqa_logits(const torch::Tensor& q,
     constexpr int block_kv = 256;
     constexpr int num_specialized_threads = 128;
     constexpr int num_q_stages = 3, num_kv_stages = 3;
-    const int num_math_threads = (device_runtime->get_arch_major() == 10 ? 256 : 512);
+    const int num_math_threads = ((device_runtime->get_arch_major() == 10 or device_runtime->get_arch_major() == 11) ? 256 : 512);
     const int block_q = block_qh / num_heads;
     DG_HOST_ASSERT(block_qh % num_heads == 0);
     DG_HOST_ASSERT(seq_len_alignment % block_q == 0);

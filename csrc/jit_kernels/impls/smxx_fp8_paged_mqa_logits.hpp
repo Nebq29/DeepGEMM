@@ -176,10 +176,10 @@ static void smxx_fp8_paged_mqa_logits(const torch::Tensor& q,
                                       const int& num_sms,
                                       const int& split_kv) {
     const int num_specialized_threads = 128;
-    const int mma_m = (device_runtime->get_arch_major() == 10 ? 128 : 64);
+    const int mma_m = ((device_runtime->get_arch_major() == 10 or device_runtime->get_arch_major() == 11) ? 128 : 64);
     const int num_math_warp_groups = split_kv / mma_m;
     const int num_math_threads = num_math_warp_groups * 128;
-    const int num_q_stages = 3, num_kv_stages = (device_runtime->get_arch_major() == 10 ? 4 : 3);
+    const int num_q_stages = 3, num_kv_stages = ((device_runtime->get_arch_major() == 10 or device_runtime->get_arch_major() == 11) ? 4 : 3);
     DG_HOST_ASSERT(split_kv % mma_m == 0 and logits_stride % split_kv == 0);
 
     // Construct TMAs

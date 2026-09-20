@@ -240,11 +240,11 @@ static void smxx_fp8_paged_mqa_logits(const torch::Tensor& q,
         num_q_stages = 2;
         num_kv_stages = 3;
     } else {
-        mma_m = (arch_major == 10 ? 128 : 64);
+        mma_m = ((arch_major == 10 or arch_major == 11) ? 128 : 64);
         num_math_warp_groups = split_kv / mma_m;
         num_math_threads = num_math_warp_groups * 128;
         num_q_stages = 3;
-        num_kv_stages = (arch_major == 10 ? 4 : 3);
+        num_kv_stages = ((arch_major == 10 or arch_major == 11) ? 4 : 3);
     }
     DG_HOST_ASSERT(split_kv % mma_m == 0 and logits_stride % split_kv == 0);
 

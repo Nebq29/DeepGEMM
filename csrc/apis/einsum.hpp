@@ -56,7 +56,7 @@ static void bmk_bnk_mn(const torch::Tensor& a, const torch::Tensor& b, const tor
         sm90_bmn_bnk_mn_gemm(a, b, d, s, m, n, k);
     } else if (arch_major == 12) {
         sm120_bmn_bnk_mn_gemm(a, b, d, s, m, n, k);
-    } else if (arch_major == 10) {
+    } else if ((arch_major == 10 or arch_major == 11)) {
         sm100_bmn_bnk_mn_gemm(a, b, d, s, m, n, k);
     } else {
         DG_HOST_UNREACHABLE("Unsupported architecture");
@@ -81,7 +81,7 @@ static void bhr_hdr_bhd(const torch::Tensor& A, const torch::Tensor& B, const to
         sm90_bf16_bhr_hdr_bhd(A, B, D, b, h, r, d);
     } else if (arch_major == 12) {
         sm120_bf16_bhr_hdr_bhd(A, B, D, b, h, r, d);
-    } else if (arch_major == 10) {
+    } else if ((arch_major == 10 or arch_major == 11)) {
         sm100_bf16_bhr_hdr_bhd(A, B, D, b, h, r, d);
     } else {
         DG_HOST_UNREACHABLE("Unsupported architecture");
@@ -106,7 +106,7 @@ static void bhd_hdr_bhr(const torch::Tensor& A, const torch::Tensor& B, const to
         sm90_bf16_bhd_hdr_bhr(A, B, D, b, h, r, d);
     } else if (arch_major == 12) {
         sm120_bf16_bhd_hdr_bhr(A, B, D, b, h, r, d);
-    } else if (arch_major == 10) {
+    } else if ((arch_major == 10 or arch_major == 11)) {
         sm100_bf16_bhd_hdr_bhr(A, B, D, b, h, r, d);
     } else {
         DG_HOST_UNREACHABLE("Unsupported architecture");
@@ -212,7 +212,7 @@ static void fp8_bmm(const torch::Tensor& a, const torch::Tensor& sfa,
     // Dispatch implementation
     if (arch_major == 12) {
         sm120_fp8_fp4_bmm(a, transformed_sfa, b, transformed_sfb, c, d, batch_size, m, n, k, gran_k_a, gran_k_b, major_a, major_b, compiled_dims);
-    } else if (arch_major == 10) {
+    } else if ((arch_major == 10 or arch_major == 11)) {
         sm100_fp8_bmm(a, transformed_sfa, b, transformed_sfb, c, d, batch_size, m, n, k, gran_k_a, gran_k_b, major_a, major_b, compiled_dims);
     } else {
         const auto major_sfb = get_major_type_ab(sfb);

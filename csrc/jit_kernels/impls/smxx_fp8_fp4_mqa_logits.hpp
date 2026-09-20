@@ -98,7 +98,7 @@ static void smxx_fp8_mqa_logits(const torch::Tensor& q,
     const int arch_major = device_runtime->get_arch_major();
     const int num_q_stages = (arch_major == 12 ? 2 : 3);
     const int num_kv_stages = 3;
-    const int num_math_threads = (arch_major == 12 ? 256 : (arch_major == 10 ? 256 : 512));
+    const int num_math_threads = (arch_major == 12 ? 256 : ((arch_major == 10 or arch_major == 11) ? 256 : 512));
     const int num_sms = device_runtime->get_num_sms();
 
     // SM120 split-KV: when there are fewer q-blocks than SMs, split each q-block's
@@ -273,7 +273,7 @@ static void sm100_fp8_mqa_logits_f16_weights(
     const int &seq_len_kv, const int &max_seqlen_k, const int &stride_logits,
     const int &num_heads, const int &head_dim, const int &block_q,
     const int &block_kv) {
-    DG_HOST_ASSERT(device_runtime->get_arch_major() == 10);
+    DG_HOST_ASSERT(device_runtime->get_arch_major() == 10 or device_runtime->get_arch_major() == 11);
 
     constexpr int num_specialized_threads = 128;
     constexpr int num_q_stages = 5, num_kv_stages = 8;

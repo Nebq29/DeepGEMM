@@ -53,7 +53,7 @@ public:
         if (arch_major == 12)
             return {128, 64, 64};
         // SM100: 16-row MMA steps from 240 down to 32
-        if (arch_major == 10)
+        if ((arch_major == 10 or arch_major == 11))
             return {240, 32, 16};
         // SM90 and others: fixed legacy alignment, no shrinking
         return {kLegacyMKAlignmentForContiguousLayout, kLegacyMKAlignmentForContiguousLayout, 1};
