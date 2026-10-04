@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include <cuda/std/cstdint>
 
 #include <deep_gemm/common/exception.cuh>

@@ -8,11 +8,7 @@
 // Attention kernels
 #include <deep_gemm/impls/sm90_fp8_mqa_logits.cuh>
 #include <deep_gemm/impls/sm90_fp8_paged_mqa_logits.cuh>
-#include <deep_gemm/impls/sm100_fp4_mqa_logits.cuh>
-#include <deep_gemm/impls/sm100_fp8_mqa_logits.cuh>
-#include <deep_gemm/impls/sm100_fp8_mqa_logits_f16_weights.cuh>
-#include <deep_gemm/impls/sm100_fp4_paged_mqa_logits.cuh>
-#include <deep_gemm/impls/sm100_fp8_paged_mqa_logits.cuh>
+#include <deep_gemm/impls/sm100_mqa_logits.cuh>
 
 // Einsum kernels
 #include <deep_gemm/impls/sm90_bmk_bnk_mn.cuh>
@@ -24,10 +20,14 @@
 
 // Layout kernels
 #include <deep_gemm/impls/smxx_layout.cuh>
-#include <deep_gemm/impls/smxx_clean_logits.cuh>
+
+// Locality domain probes
+#include <deep_gemm/impls/sm100_locality_domain.cuh>
 
 // Mega kernels
 #include <deep_gemm/impls/sm100_fp8_fp4_mega_moe.cuh>
+#include <deep_gemm/impls/sm100_bf16_mega_moe.cuh>
+#include <deep_gemm/impls/sm100_bf16_mega_gate.cuh>
 
 using namespace deep_gemm;
 
