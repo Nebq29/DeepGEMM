@@ -186,7 +186,8 @@ def test_k_grouped_gemm_contiguous() -> None:
                         a, b, output, test_host_ks_cpu, grouped_layout, accumulator,
                         use_psum_layout=use_psum_layout)
                     assert_direct_output_matches_fp32_accumulation(d, launch, case_label)
-                    if out_dtype == torch.bfloat16:
+                    # SR requires cvt.rs (SM100 family only); Thor sm_110a falls back to RN
+                    if out_dtype == torch.bfloat16 and get_arch_major() == 10:
                         deep_gemm.k_grouped_bf16_gemm_tn_contiguous(
                             a, b, d, test_host_ks_cpu, grouped_layout, None, use_psum_layout=use_psum_layout,
                             epilogue=deep_gemm.epilogue.BF16StochasticRounding())
