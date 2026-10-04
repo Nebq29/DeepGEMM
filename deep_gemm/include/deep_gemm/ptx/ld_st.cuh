@@ -11,8 +11,18 @@ namespace deep_gemm::ptx {
 CUTLASS_DEVICE uint32_t cvt_rs_bf16x2_f32(const float& lower, const float& upper,
                                           const uint32_t& random_bits) {
     uint32_t packed;
+#if defined(__CUDA_ARCH__) and (__CUDA_ARCH__ >= 1000) and (__CUDA_ARCH__ < 1100)
+    // Stochastic rounding is available on SM100-family (sm_100a/f, sm_101a/f, sm_103a/f) only.
     asm volatile("cvt.rs.bf16x2.f32 %0, %1, %2, %3;\n"
                  : "=r"(packed) : "f"(upper), "f"(lower), "r"(random_bits));
+#else
+    // Thor (sm_110a) and other targets lack `cvt.rs`: fall back to round-to-nearest.
+    // The BF16 stochastic-rounding epilogue is an explicit opt-in mode (not used by
+    // vLLM's serving path); on these archs it degrades to RN with random_bits ignored.
+    (void)random_bits;
+    asm volatile("cvt.rn.bf16x2.f32 %0, %1, %2;\n"
+                 : "=r"(packed) : "f"(upper), "f"(lower));
+#endif
     return packed;
 }
 
