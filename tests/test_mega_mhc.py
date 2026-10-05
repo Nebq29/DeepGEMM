@@ -239,7 +239,7 @@ def check_correctness(actual, reference, case):
     return max_diffs
 
 
-@test_filter(lambda: is_sm100_family())
+@test_filter(lambda: get_arch_major() == 10)  # redux.f32 unsupported on sm_110f (round 13)
 @torch.no_grad()
 def test_mega_mhc_api_contract() -> None:
     num_tokens, hidden = 64, 4096
@@ -316,7 +316,7 @@ def test_mega_mhc_api_contract() -> None:
             assert_bitwise_equal(tensor, expected_outputs[name], f'Multi-stream {stream_idx}: {name}')
 
 
-@test_filter(lambda: is_sm100_family())
+@test_filter(lambda: get_arch_major() == 10)  # redux.f32 unsupported on sm_110f (round 13)
 @torch.no_grad()
 def test_mega_mhc() -> None:
     for is_shifted in (True, False):

@@ -167,7 +167,7 @@ def test_fp8_bhr_hdr_bhd(use_ue8m0: bool = True):
                     deep_gemm.fp8_einsum('bhr,hdr->bhd', x_fp8, y_fp8, output)
                     diff = calc_diff(output, ref_z)
 
-                    if is_sm100_family():
+                    if get_arch_major() == 10:  # SR requires cvt.rs; sm_110 has none
                         def launch_accumulated(out, acc):
                             assert out is acc
                             tmp = torch.zeros((h, b, d), device='cuda', dtype=torch.float).permute(1, 0, 2)
