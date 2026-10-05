@@ -1,6 +1,7 @@
 #pragma once
 
 #include <deep_jit/utils/lazy.hpp>
+#include <deep_jit/utils/env.hpp>
 
 #include "../../runtime/jit.hpp"
 #include "../../utils/exception.hpp"
@@ -55,8 +56,20 @@ public:
     }
 
     static int get_theoretical_mk_alignment_for_contiguous_layout(const std::optional<int>& expected_m) {
-        if (jit->device.get_arch_major() != 10 and jit->device.get_arch_major() != 11)
+        const int arch_major = jit->device.get_arch_major();
+        if (arch_major != 10 and arch_major != 11)
             return kLegacyMKAlignmentForContiguousLayout;
+
+        // Thor opt-in (round 13): restore the pre-sync per-call shrinking alignment
+        // {max 240, min 32, step 16} instead of upstream's fixed 256. Default off.
+        if (arch_major == 11 and deep_jit::get_env<int>("DG_THOR_SHRINK_ALIGN", 0)) {
+            int block_m = 240;
+            if (expected_m.has_value()) {
+                const int per_group_m = expected_m.value();
+                for (; block_m > 32 and block_m - 16 >= per_group_m; block_m -= 16);
+            }
+            return block_m;
+        }
 
         // The newly supported UMMA_N=256 allows a fixed alignment of 256, which is friendlier to MoE cast, M-grouped, and K-grouped operators.
         // NOTES: `expected_m` is ignored, so small values may incur performance loss; use Mega MoE directly for such workloads.

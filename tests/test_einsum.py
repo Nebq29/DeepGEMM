@@ -5,7 +5,7 @@ import deep_gemm
 from deep_gemm.testing import (
     bench_kineto,
     calc_diff, count_bytes,
-    get_arch_major, test_filter
+    get_arch_major, is_sm100_family, test_filter
 )
 from deep_gemm.utils.math import (
     align, cast_back_from_fp8, ceil_div,
@@ -141,7 +141,7 @@ def test_fp8_bhr_hdr_bhd(use_ue8m0: bool = True):
             for i in range(h):
                 y_fp8[0][i], y_fp8[1][i] = per_block_cast_to_fp8(y[i], use_ue8m0=use_ue8m0)
             z = torch.empty((b, h, d), device='cuda', dtype=torch.bfloat16)
-            output_dtypes = (torch.bfloat16, torch.float8_e4m3fn) if get_arch_major() == 10 else (torch.bfloat16,)
+            output_dtypes = (torch.bfloat16, torch.float8_e4m3fn) if is_sm100_family() else (torch.bfloat16,)
             for output_dtype in output_dtypes:
                 if output_dtype == torch.float8_e4m3fn:
                     output = torch.empty_like(z, dtype=output_dtype)
@@ -167,7 +167,7 @@ def test_fp8_bhr_hdr_bhd(use_ue8m0: bool = True):
                     deep_gemm.fp8_einsum('bhr,hdr->bhd', x_fp8, y_fp8, output)
                     diff = calc_diff(output, ref_z)
 
-                    if get_arch_major() == 10:
+                    if is_sm100_family():
                         def launch_accumulated(out, acc):
                             assert out is acc
                             tmp = torch.zeros((h, b, d), device='cuda', dtype=torch.float).permute(1, 0, 2)

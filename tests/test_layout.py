@@ -1,6 +1,6 @@
 import torch
 import random
-from deep_gemm.testing import bench_kineto, count_bytes, get_arch_major
+from deep_gemm.testing import bench_kineto, count_bytes, get_arch_major, is_sm100_family
 from deep_gemm.utils import (
     align, ceil_div, ceil_to_ue8m0,
     per_token_cast_to_fp8, per_channel_cast_to_fp8,
@@ -82,7 +82,7 @@ def test_sf_layout_kernels() -> None:
 
 def test_k_grouped_sf_layout_kernels() -> None:
     print('Testing k-grouped SF layout kernels:')
-    if get_arch_major() != 10:
+    if not is_sm100_family():
         print(' > Skipped (packed k-grouped SF only supported on SM100)')
         return
 
@@ -117,7 +117,7 @@ def test_k_grouped_sf_layout_kernels() -> None:
 
 def test_k_grouped_psum_sf_layout_kernels() -> None:
     print('Testing k-grouped psum SF layout kernels:')
-    if get_arch_major() != 10:
+    if not is_sm100_family():
         print(' > Skipped (packed k-grouped SF only supported on SM100)')
         return
 

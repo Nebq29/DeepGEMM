@@ -9,6 +9,7 @@ from deep_gemm.testing import (
     bench_kineto,
     assert_bitwise_equal, calc_diff, count_bytes,
     get_arch_major,
+    is_sm100_family,
     test_filter
 )
 from deep_gemm.utils import (ceil_div, per_token_cast_to_fp4, cast_back_from_fp4, per_token_cast_to_fp8,
@@ -43,13 +44,13 @@ def dtype_tag(dtype: torch.dtype) -> str:
 # SM100 takes MXFP4 / MXFP8 with BF16 weights and logits; SM90 takes E4M3 with one float scale per KV token, float
 # weights and float logits
 def mqa_logits_formats():
-    if get_arch_major() == 10:
+    if is_sm100_family():
         return [(fmt, torch.bfloat16) for fmt in ('mxfp4', 'mxfp8')]
     return [('fp8', torch.float)]
 
 
 def mqa_logits_heads(is_mxfp4: bool):
-    if get_arch_major() == 10:
+    if is_sm100_family():
         heads = (8, 12, 16, 20, 32, 64)
         head_dims = (64, 128) if is_mxfp4 else (32, 64, 128)
         return heads, head_dims
@@ -175,7 +176,7 @@ def test_mqa_logits():
             assert_bitwise_equal(logits_again, masked_logits, 'mqa logits self-consistency')
 
         workspace = None
-        if get_arch_major() == 10:
+        if is_sm100_family():
             workspace = deep_gemm.get_mqa_logits_metadata(ks, ke, seq_len_kv, num_heads)
             scheduled_logits = deep_gemm.fp8_fp4_mqa_logits(**kernel_kwargs, schedule_meta=workspace)
             scheduled_logits = scheduled_logits.masked_fill(~self_mask, 0)
@@ -299,7 +300,7 @@ def kv_cache_cast_to_mxfp8(x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]
 def test_paged_mqa_logits():
     # SM100 flattens varlen requests into `[num_q_tokens, 1]` rows tied together by `indices`; SM90 takes
     # `[batch_size, next_n]` queries. Both give every row its own context length
-    is_varlen = get_arch_major() == 10
+    is_varlen = is_sm100_family()
 
     def enumerate_paged_mqa_logits():
         max_kv_pool_tokens = 32 * 1024 * 1024
@@ -473,7 +474,7 @@ def make_sparse_kv_block_indices(context_lens: List[int], request_indices: List[
     return torch.tensor(indices, device='cuda', dtype=torch.int32), num_blocks_per_q
 
 
-@test_filter(lambda: get_arch_major() == 10)
+@test_filter(lambda: is_sm100_family())
 def test_sparse_mqa_logits() -> None:
     head_dim, page_kv = 128, 64
 

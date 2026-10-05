@@ -8,6 +8,11 @@ def get_arch_major() -> int:
     return major
 
 
+def is_sm100_family() -> bool:
+    """SM100 (B200) and SM110 (Jetson Thor) share the same kernel paths."""
+    return get_arch_major() in (10, 11)
+
+
 def test_filter(condition: Callable):
     def decorator(func):
         @functools.wraps(func)

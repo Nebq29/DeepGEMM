@@ -5,7 +5,7 @@ import torch
 from math import prod
 from typing import Generator, List, Optional, Tuple
 
-from deep_gemm.testing import get_arch_major
+from deep_gemm.testing import get_arch_major, is_sm100_family
 from deep_gemm.utils import (
     align, ceil_div,
     per_token_cast_to_fp8, per_channel_cast_to_fp8, per_block_cast_to_fp8,
@@ -80,7 +80,7 @@ class QuantConfig:
         if dtype == torch.float4_e2m1fn_x2:
             return [QuantConfig((32, 32, True, True))]
         quant_config_list = [QuantConfig()]
-        if get_arch_major() == 10:
+        if is_sm100_family():
             quant_config_list.append(QuantConfig((128, 32, False, True)))
             quant_config_list.append(QuantConfig((32, 32, True, True)))
         return quant_config_list
@@ -149,7 +149,7 @@ def enumerate_normal(dtype: torch.dtype, collect_cublas_scores: bool = False) ->
                     out_dtype = torch.bfloat16 if i < len(bf16_output_nk) else torch.float
                     yield emit(kernel_type, quant_config, m, n, k, MajorTypeAB.KMajor, MajorTypeAB.KMajor, False, out_dtype)
                     # BF16 accumulation: supported on all BF16 GEMMs, and SM100 FP8/FP4 GEMMs
-                    if out_dtype == torch.bfloat16 and (dtype == torch.bfloat16 or get_arch_major() == 10):
+                    if out_dtype == torch.bfloat16 and (dtype == torch.bfloat16 or is_sm100_family()):
                         yield emit(kernel_type, quant_config, m, n, k, MajorTypeAB.KMajor, MajorTypeAB.KMajor, True, out_dtype)
 
             # Backward
@@ -164,7 +164,7 @@ def enumerate_normal(dtype: torch.dtype, collect_cublas_scores: bool = False) ->
                         yield emit(kernel_type,          quant_config, m, k, n, MajorTypeAB.KMajor, override_major, False, torch.bfloat16)  # Dgrad
                         yield emit(override_kernel_type, quant_config, n, m, k, override_major, override_major, True,  torch.float)         # Wgrad
                         yield emit(override_kernel_type, quant_config, n, m, k, override_major, override_major, False, torch.bfloat16)      # Wgrad
-                        if dtype == torch.bfloat16 or get_arch_major() == 10:
+                        if dtype == torch.bfloat16 or is_sm100_family():
                             yield emit(override_kernel_type, quant_config, n, m, k, override_major, override_major, False, torch.float)     # Wgrad
 
             if collect_cublas_scores and scores:
@@ -200,7 +200,7 @@ def enumerate_m_grouped_contiguous(dtype: torch.dtype) -> Generator:
             if len(quant_config_list) > 1:
                 quant_config.print()
             for use_psum_layout in get_psum_layout_usage():
-                for ensure_zero_padding in ((False, True) if use_psum_layout and get_arch_major() == 10 else (False, )):
+                for ensure_zero_padding in ((False, True) if use_psum_layout and is_sm100_family() else (False, )):
                     reset_seed()
                     for num_groups, expected_m_per_group in m_group_list:
                         for n, k in n_k_list:
@@ -241,7 +241,7 @@ def enumerate_k_grouped_contiguous(dtype: torch.dtype):
         major_a, major_b = MajorTypeAB.KMajor, MajorTypeAB.KMajor
     else:
         major_a, major_b = MajorTypeAB.MNMajor, MajorTypeAB.MNMajor
-    psum_list = (False, True) if get_arch_major() == 10 else (False, )
+    psum_list = (False, True) if is_sm100_family() else (False, )
     if get_arch_major() == 9:
         cd_options = [(True, torch.float)]
     else:
@@ -284,7 +284,7 @@ def enumerate_sf_layout():
                             set_mk_alignment_for_contiguous_layout(gran_k)
                             yield mn, k, with_transpose, use_ue8m0, num_groups, gran_k
 
-    if get_arch_major() == 10:
+    if is_sm100_family():
         for sf_k, use_ue8m0 in ((908, False), (1211, True)):
             set_mk_alignment_for_contiguous_layout(32)
             yield 4096, sf_k * 32, True, use_ue8m0, 1, 32

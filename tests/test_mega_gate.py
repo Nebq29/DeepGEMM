@@ -10,6 +10,7 @@ from deep_gemm.testing import (
     calc_diff,
     count_bytes,
     get_arch_major,
+    is_sm100_family,
     test_filter,
 )
 
@@ -201,7 +202,7 @@ def check_case(num_tokens: int, hidden: int, num_routed_experts: int,
     check_correctness(inputs, outputs, use_shared_as_routed, num_topk, num_shared_experts)
 
 
-@test_filter(lambda: get_arch_major() == 10)
+@test_filter(lambda: is_sm100_family())
 @torch.no_grad()
 def test_mega_gate() -> None:
     torch.manual_seed(0)
@@ -253,7 +254,7 @@ def check_routing_controls() -> None:
     assert torch.all(unmapped_topk_idx[active_force_random] == -1).item()
 
 
-@test_filter(lambda: get_arch_major() == 10)
+@test_filter(lambda: is_sm100_family())
 @torch.no_grad()
 def test_mega_gate_api_contract() -> None:
     torch.manual_seed(2)

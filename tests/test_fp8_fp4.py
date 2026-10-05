@@ -7,7 +7,8 @@ from deep_gemm.testing import (
     assert_bitwise_equal,
     bench_kineto,
     calc_diff, count_bytes,
-    get_arch_major
+    get_arch_major,
+    is_sm100_family
 )
 from utils import (
     add_sf_k_padding, assert_direct_output_matches_fp32_accumulation,
@@ -25,8 +26,8 @@ from generators import (
 
 def test_gemm() -> None:
     print('Testing GEMM:')
-    use_alpha_options = (False, True) if get_arch_major() == 10 else (False,)
-    test_sf_k_padding = get_arch_major() == 10
+    use_alpha_options = (False, True) if is_sm100_family() else (False,)
+    test_sf_k_padding = is_sm100_family()
     for kernel_type, quant_config, m, n, k, major_a, major_b, accumulate, out_dtype, scores in \
             enumerate_normal(torch.float8_e4m3fn, collect_cublas_scores=True):
         major_opt  = 'N' if major_a.is_k_major() else 'T'
@@ -242,11 +243,11 @@ def test_k_grouped_gemm_contiguous() -> None:
     print('Testing k-grouped GEMM:')
 
     arch_major = get_arch_major()
-    test_sf_k_padding = arch_major == 10
+    test_sf_k_padding = is_sm100_family()
     test_options = [(torch.float8_e4m3fn, QuantConfig(),
                      deep_gemm.k_grouped_fp8_gemm_nt_contiguous if arch_major == 9 else
                      deep_gemm.k_grouped_fp8_gemm_tn_contiguous)]
-    if arch_major == 10:
+    if is_sm100_family():
         test_options.append((torch.float4_e2m1fn_x2, QuantConfig((32, 32, True, True)),
                              deep_gemm.k_grouped_fp4_gemm_nt_contiguous))
     use_ue8m0 = get_ue8m0_usage(KernelType.Kernel1D1D)

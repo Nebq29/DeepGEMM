@@ -23,7 +23,7 @@ from generators import (
 def test_gemm() -> None:
     print('Testing GEMM:')
     scores = []
-    use_alpha_options = (False, True) if get_arch_major() == 10 else (False,)
+    use_alpha_options = (False, True) if is_sm100_family() else (False,)
     for kernel_type, _, m, n, k, major_a, major_b, accumulate, out_dtype in enumerate_normal(torch.bfloat16):
         deep_gemm.use_deterministic_algorithms(True)
         major_opt  = 'N' if major_a.is_k_major() else 'T'

@@ -7,6 +7,7 @@ from deep_gemm.testing import (
     calc_diff,
     count_bytes,
     get_arch_major,
+    is_sm100_family,
     test_filter,
 )
 from deep_gemm.utils import align, per_token_cast_to_fp8
@@ -238,7 +239,7 @@ def check_correctness(actual, reference, case):
     return max_diffs
 
 
-@test_filter(lambda: get_arch_major() == 10)
+@test_filter(lambda: is_sm100_family())
 @torch.no_grad()
 def test_mega_mhc_api_contract() -> None:
     num_tokens, hidden = 64, 4096
@@ -315,7 +316,7 @@ def test_mega_mhc_api_contract() -> None:
             assert_bitwise_equal(tensor, expected_outputs[name], f'Multi-stream {stream_idx}: {name}')
 
 
-@test_filter(lambda: get_arch_major() == 10)
+@test_filter(lambda: is_sm100_family())
 @torch.no_grad()
 def test_mega_mhc() -> None:
     for is_shifted in (True, False):
