@@ -5,7 +5,7 @@ import torch
 import deep_gemm
 from deep_gemm.testing import (
     bench_kineto,
-    calc_diff, count_bytes
+    calc_diff, count_bytes, is_sm100_family
 )
 from utils import (
     assert_direct_output_matches_fp32_accumulation,
